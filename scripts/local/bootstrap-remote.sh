@@ -193,8 +193,15 @@ else
   echo "added GitHub host key to known_hosts"
 fi
 
-# TODO : this should be idempotent and check if ~/infra exists
-git clone git@github.com:gjtiquia/vps-infra-starter infra
+if [[ -e "$HOME/infra" || -L "$HOME/infra" ]]; then
+  echo "skipped: $HOME/infra already exists"
+else
+  git clone git@github.com:gjtiquia/vps-infra-starter "$HOME/infra"
+  echo "cloned repo to: $HOME/infra"
+
+  rm -rf "$HOME/infra/.git"
+  echo "removed Git metadata from: $HOME/infra"
+fi
 
 REMOTE
 echo " "
