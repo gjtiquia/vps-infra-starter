@@ -18,7 +18,7 @@
 # set -eux
 set -eu
 
-echo "=== gjtiquia/bootstrap-vps: running ==="
+echo "=== gjtiquia/vps-infra-starter - bootstrap-remote.sh: running ==="
 echo " "
 
 echo "this is meant to be run in your local machine, make sure you have ssh access to your vps"
