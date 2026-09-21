@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 
 # TODO : (in this order)
-# - adduser (input username and pw)
-# - user ssh access copy the authorized keys (so no password prompt)
 # - ghostty setup for the user
 # - setup ~/infra with vps-infra-starter, but rm -rf .git
 # - disable password auth, root login, PAM
@@ -55,6 +53,16 @@ read -p "sudo_user_name: " -r sudo_user_name
 read -p "sudo_user_password: " -rs sudo_user_password
 echo " "
 
+if [[ ! "$sudo_user_name" =~ ^[a-z_][a-z0-9_-]*$ ]]; then
+  echo "invalid sudo user name" >&2
+  exit 1
+fi
+
+if [[ -z "$sudo_user_password" ]]; then
+  echo "sudo user password cannot be empty" >&2
+  exit 1
+fi
+
 # we first ensure we no need to enter password for the operations later
 echo "=== running ssh-copy-id ==="
 echo " "
@@ -67,14 +75,17 @@ ssh-copy-id "$ssh_user@$ssh_ip"
 # we complete as many things as we can as root so we dont need to run "sudo"
 
 # << = heredoc, use quotes for $ to be resolved on VPS, no quotes for $ to be resolved on local shell
-# tested - idempotent
-ssh "$ssh_user@$ssh_ip" << 'REMOTE' 
-
+# Send the credentials over SSH's stdin instead of putting the password in the
+# remote command (where it could be visible in a process listing). The remote
+# shell reads the first two lines, then bash reads the script that follows.
+{
+  printf '%s\n' "$sudo_user_name" "$sudo_user_password"
+  cat <<'REMOTE'
 echo "=== installing packages ==="
 echo " "
 
 apt update
-apt install locales ufw git vim tmux
+apt install -y locales ufw git vim tmux sudo
 
 echo " "
 
@@ -106,10 +117,31 @@ ufw status verbose # shows default too
 echo "=== setting up sudo user account ==="
 echo " "
 
+if ! id -u "$sudo_user_name" >/dev/null 2>&1; then
+  adduser --disabled-password --gecos "" "$sudo_user_name"
+fi
 
+# chpasswd is safe to repeat; it leaves the account with the requested password.
+printf '%s:%s\n' "$sudo_user_name" "$sudo_user_password" | chpasswd
 
+if ! id -nG "$sudo_user_name" | tr ' ' '\n' | grep -qx sudo; then
+  usermod -aG sudo "$sudo_user_name"
+fi
+
+if [[ ! -f /root/.ssh/authorized_keys ]]; then
+  echo "cannot copy SSH keys: /root/.ssh/authorized_keys does not exist" >&2
+  exit 1
+fi
+
+install -d -m 700 -o "$sudo_user_name" -g "$sudo_user_name" \
+  "/home/$sudo_user_name/.ssh"
+install -m 600 -o "$sudo_user_name" -g "$sudo_user_name" \
+  /root/.ssh/authorized_keys "/home/$sudo_user_name/.ssh/authorized_keys"
 
 REMOTE
+} | ssh "$ssh_user@$ssh_ip" \
+  'IFS= read -r sudo_user_name; IFS= read -r sudo_user_password; export sudo_user_name sudo_user_password; bash -se'
+unset sudo_user_password
 echo " "
 
 
