@@ -1,9 +1,7 @@
 #!/usr/bin/env bash
 
-# TODO : (in this order)
-# - setup ~/infra with vps-infra-starter, but rm -rf .git
-# - disable password auth, root login, PAM
-# - the rest should be sudo on VPS, idempotent there, interactive input sudo pw
+# This is a one-shot bootstrap script. Once it finishes, root SSH login is
+# disabled and a later run assumes the VPS was already bootstrapped.
 
 # TODO : this would probably be easier as a bootstrap script on VPS with sudo
 # - user setup 
@@ -48,6 +46,22 @@ echo " "
 ssh_user=root
 
 read -p "ssh_ip: " -r ssh_ip
+echo " "
+
+# we first ensure we no need to enter password for the operations later
+echo "=== running ssh-copy-id ==="
+echo " "
+echo "you may be prompted to enter your password"
+echo " "
+
+# tested - idempotent until the final step disables root SSH login
+if ! ssh-copy-id "$ssh_user@$ssh_ip"; then
+  echo " "
+  echo "root SSH access is unavailable."
+  echo "assuming this VPS was already bootstrapped; nothing to do."
+  exit 0
+fi
+
 read -p "sudo_user_name: " -r sudo_user_name
 read -p "sudo_user_password: " -rs sudo_user_password
 echo " "
@@ -61,17 +75,6 @@ if [[ -z "$sudo_user_password" ]]; then
   echo "sudo user password cannot be empty" >&2
   exit 1
 fi
-
-echo " "
-
-# we first ensure we no need to enter password for the operations later
-echo "=== running ssh-copy-id ==="
-echo " "
-echo "you may be prompted to enter your password"
-echo " "
-
-# tested - idempotent
-ssh-copy-id "$ssh_user@$ssh_ip"
 
 # we complete as many things as we can as root so we dont need to run "sudo"
 
@@ -169,7 +172,10 @@ echo " "
 infocmp -x xterm-ghostty | ssh "$ssh_user@$ssh_ip" -- tic -x -
 echo " "
 
-ssh -A "$sudo_user_name@$ssh_ip" << 'REMOTE'
+# Batch mode and disabled password methods prove that key-based login works
+# before root access is removed.
+ssh -A -o BatchMode=yes -o PasswordAuthentication=no \
+  -o KbdInteractiveAuthentication=no "$sudo_user_name@$ssh_ip" <<'REMOTE'
 
 echo " "
 echo "=== setting up ~/infra ==="
@@ -204,4 +210,34 @@ else
 fi
 
 REMOTE
+echo " "
+
+echo "=== disabling password authentication and root SSH login ==="
+echo " "
+
+# Reaching this point proves that a fresh SSH connection as the sudo user works.
+# This is intentionally the final operation: future runs will treat unavailable
+# root SSH access as evidence that bootstrap already completed.
+ssh "$ssh_user@$ssh_ip" <<'REMOTE'
+
+hardening_file=/etc/ssh/sshd_config.d/00-bootstrap-hardening.conf
+
+cat > "$hardening_file" <<'SSHD_CONFIG'
+# Managed by bootstrap-remote.sh
+PasswordAuthentication no
+KbdInteractiveAuthentication no
+PermitRootLogin no
+SSHD_CONFIG
+
+# Refuse to reload SSH if the resulting configuration is invalid.
+sshd -t
+systemctl reload ssh
+
+echo "disabled SSH password authentication and root login"
+
+REMOTE
+
+echo " "
+echo "=== bootstrap complete ==="
+echo "root SSH access is now disabled; this script is not intended to run again."
 echo " "
