@@ -63,6 +63,8 @@ if [[ -z "$sudo_user_password" ]]; then
   exit 1
 fi
 
+echo " "
+
 # we first ensure we no need to enter password for the operations later
 echo "=== running ssh-copy-id ==="
 echo " "
