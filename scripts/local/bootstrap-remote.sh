@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
 # TODO : (in this order)
-# - ghostty setup for the user
 # - setup ~/infra with vps-infra-starter, but rm -rf .git
 # - disable password auth, root login, PAM
 # - the rest should be sudo on VPS, idempotent there, interactive input sudo pw
@@ -164,4 +163,20 @@ REMOTE
 unset sudo_user_password
 echo " "
 
+echo "=== setting ghostty ==="
+echo " "
 
+infocmp -x xterm-ghostty | ssh "$ssh_user@$ssh_ip" -- tic -x -
+echo " "
+
+ssh -A "$sudo_user_name@$ssh_ip" << 'REMOTE'
+
+echo " "
+echo "=== setting up ~/infra ==="
+echo " "
+
+# TODO : this should be idempotent and check if ~/infra exists
+git clone git@github.com:gjtiquia/vps-infra-starter infra
+
+REMOTE
+echo " "
