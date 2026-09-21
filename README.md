@@ -1,6 +1,5 @@
 # vps-infra-starter
 
-
 ## instructions
 
 ### pre-requisites

@@ -51,6 +51,8 @@ echo " "
 ssh_user=root
 
 read -p "ssh_ip: " -r ssh_ip
+read -p "sudo_user_name: " -r sudo_user_name
+read -p "sudo_user_password: " -rs sudo_user_password
 echo " "
 
 # we first ensure we no need to enter password for the operations later
@@ -99,6 +101,13 @@ ufw show added
 ufw --force enable # force so it doesnt require interactive prompt to confirm
 ufw status # shows OpenSSH port 22
 ufw status verbose # shows default too
+
+
+echo "=== setting up sudo user account ==="
+echo " "
+
+
+
 
 REMOTE
 echo " "
