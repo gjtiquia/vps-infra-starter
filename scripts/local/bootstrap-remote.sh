@@ -175,6 +175,24 @@ echo " "
 echo "=== setting up ~/infra ==="
 echo " "
 
+# Agent forwarding provides authentication, but GitHub's host key must still be
+# trusted separately on the VPS. A heredoc is non-interactive, so SSH cannot ask
+# whether to add an unknown host key.
+if ! ssh-add -L >/dev/null 2>&1; then
+  echo "no SSH key is available through agent forwarding" >&2
+  echo "run 'ssh-add' locally, then rerun this script" >&2
+  exit 1
+fi
+
+install -d -m 700 "$HOME/.ssh"
+if ssh-keygen -F github.com >/dev/null; then
+  echo "skipped: GitHub host key already trusted"
+else
+  ssh-keyscan -H github.com >> "$HOME/.ssh/known_hosts"
+  chmod 600 "$HOME/.ssh/known_hosts"
+  echo "added GitHub host key to known_hosts"
+fi
+
 # TODO : this should be idempotent and check if ~/infra exists
 git clone git@github.com:gjtiquia/vps-infra-starter infra
 
