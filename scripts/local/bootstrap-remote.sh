@@ -119,13 +119,21 @@ echo " "
 
 if ! id -u "$sudo_user_name" >/dev/null 2>&1; then
   adduser --disabled-password --gecos "" "$sudo_user_name"
+  echo "created user: $sudo_user_name"
+else
+  echo "skipped: user $sudo_user_name already exists"
 fi
 
-# chpasswd is safe to repeat; it leaves the account with the requested password.
+# There is no simple, safe way to compare a plaintext password with its stored
+# hash, so reapply it to guarantee the requested password is set.
 printf '%s:%s\n' "$sudo_user_name" "$sudo_user_password" | chpasswd
+echo "set password for user: $sudo_user_name"
 
 if ! id -nG "$sudo_user_name" | tr ' ' '\n' | grep -qx sudo; then
   usermod -aG sudo "$sudo_user_name"
+  echo "granted sudo access to user: $sudo_user_name"
+else
+  echo "skipped: user $sudo_user_name already has sudo access"
 fi
 
 if [[ ! -f /root/.ssh/authorized_keys ]]; then
@@ -133,10 +141,20 @@ if [[ ! -f /root/.ssh/authorized_keys ]]; then
   exit 1
 fi
 
-install -d -m 700 -o "$sudo_user_name" -g "$sudo_user_name" \
-  "/home/$sudo_user_name/.ssh"
-install -m 600 -o "$sudo_user_name" -g "$sudo_user_name" \
-  /root/.ssh/authorized_keys "/home/$sudo_user_name/.ssh/authorized_keys"
+user_ssh_dir="/home/$sudo_user_name/.ssh"
+user_authorized_keys="$user_ssh_dir/authorized_keys"
+
+install -d -m 700 -o "$sudo_user_name" -g "$sudo_user_name" "$user_ssh_dir"
+
+if [[ -f "$user_authorized_keys" ]] \
+  && cmp -s /root/.ssh/authorized_keys "$user_authorized_keys" \
+  && [[ "$(stat -c '%U:%G:%a' "$user_authorized_keys")" == "$sudo_user_name:$sudo_user_name:600" ]]; then
+  echo "skipped: authorized keys already copied for user $sudo_user_name"
+else
+  install -m 600 -o "$sudo_user_name" -g "$sudo_user_name" \
+    /root/.ssh/authorized_keys "$user_authorized_keys"
+  echo "copied root authorized keys to user: $sudo_user_name"
+fi
 
 REMOTE
 } | ssh "$ssh_user@$ssh_ip" \
