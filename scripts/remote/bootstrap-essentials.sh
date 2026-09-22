@@ -71,3 +71,17 @@ else
   echo "created tmux configuration symlink"
 fi
 
+# TODO : sudo apt install lazygit
+
+# TODO : .bashrc aliases
+# append the following
+# # ---
+# # custom config
+# # ---
+# 
+# # aliases
+# alias q=exit
+# alias c=clear
+# alias v=vim
+# alias lg=lazygit
+# alias tn="~/.tmux/tmux-new.sh"
