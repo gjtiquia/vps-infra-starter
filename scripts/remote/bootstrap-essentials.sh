@@ -7,7 +7,8 @@
 # e = [e]xit if a command exits with non-zero status
 # u = exit if have [u]nbound variables, prevents typos
 # x = print each command and args before e[x]ecution
-set -eux
+# set -eux
+set -eu
 
 # checks if git is authenticated
 # authenticated or note returns exit code 1
