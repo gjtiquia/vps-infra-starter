@@ -71,17 +71,45 @@ else
   echo "created tmux configuration symlink"
 fi
 
-# TODO : sudo apt install lazygit (already idempotnet)
+echo " "
+echo "=== installing lazygit ==="
 
-# TODO : .bashrc aliases
-# append the following (idempotent)
-# # ---
-# # custom config
-# # ---
-# 
-# # aliases
-# alias q=exit
-# alias c=clear
-# alias v=vim
-# alias lg=lazygit
-# alias tn="~/.tmux/tmux-new.sh"
+# apt skips reinstalling a package that is already at the requested version.
+sudo apt install -y lazygit
+
+echo " "
+echo "=== configuring bash aliases ==="
+
+bashrc="$HOME/.bashrc"
+custom_bash_config=$(cat <<'EOF'
+# ---
+# custom config
+# ---
+
+# aliases
+alias q=exit
+alias c=clear
+alias v=vim
+alias lg=lazygit
+alias tn="~/.tmux/tmux-new.sh"
+EOF
+)
+
+if [[ -d "$bashrc" ]]; then
+  echo "cannot configure bash aliases: $bashrc is a directory" >&2
+  exit 1
+fi
+
+if [[ -f "$bashrc" ]] && [[ "$(< "$bashrc")" == *"$custom_bash_config"* ]]; then
+  echo "skipped: bash aliases are already configured"
+else
+  if [[ -s "$bashrc" ]]; then
+    # Finish an unterminated final line, then separate the custom configuration.
+    if [[ -n "$(tail -c 1 "$bashrc")" ]]; then
+      printf '\n' >> "$bashrc"
+    fi
+    printf '\n' >> "$bashrc"
+  fi
+  printf '%s\n' "$custom_bash_config" >> "$bashrc"
+  echo "configured bash aliases"
+fi
