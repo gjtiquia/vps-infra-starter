@@ -76,7 +76,7 @@ echo " "
 echo "=== installing lazygit ==="
 
 # apt skips reinstalling a package that is already at the requested version.
-sudo apt install -y lazygit
+apt install -y lazygit git vim tmux unzip
 
 echo " "
 echo "=== configuring bash aliases ==="

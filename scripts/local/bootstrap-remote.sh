@@ -80,7 +80,7 @@ echo "=== installing packages ==="
 echo " "
 
 apt update
-apt install -y locales ufw git vim tmux sudo
+apt install -y locales ufw git vim tmux sudo unzip
 
 echo " "
 
