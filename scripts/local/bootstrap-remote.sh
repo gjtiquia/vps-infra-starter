@@ -3,15 +3,6 @@
 # This is a one-shot bootstrap script. Once it finishes, root SSH login is
 # disabled and a later run assumes the VPS was already bootstrapped.
 
-# TODO : this would probably be easier as a bootstrap script on VPS with sudo
-# - user setup 
-#   - .inputrc = set editing-mode vi
-#   - tmux setup
-
-# TODO : stretch goals - dev env (nvm, go)
-# TODO : stretch goals - shell DX (fzf, zoxide, yazi)
-# TODO : stretch goals - neovim deps
-
 # e = [e]xit if a command exits with non-zero status
 # u = exit if have [u]nbound variables, prevents typos
 # x = print each command and args before e[x]ecution
