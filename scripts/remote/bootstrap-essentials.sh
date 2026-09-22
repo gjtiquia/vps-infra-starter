@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
 # TODO : this would probably be easier as a bootstrap script on VPS with sudo
 # - user setup 

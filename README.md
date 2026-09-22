@@ -16,7 +16,7 @@
 ./scripts/local/bootstrap-remote.sh
 
 # ssh into and run this on your remote machine
-# TODO 
+./scripts/remote/bootstrap-essentials.sh
 ```
 
 ## resources

@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
 # e = [e]xit if a command exits with non-zero status
 # u = exit if have [u]nbound variables, prevents typos
