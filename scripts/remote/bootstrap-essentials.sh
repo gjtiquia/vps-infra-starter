@@ -71,10 +71,10 @@ else
   echo "created tmux configuration symlink"
 fi
 
-# TODO : sudo apt install lazygit
+# TODO : sudo apt install lazygit (already idempotnet)
 
 # TODO : .bashrc aliases
-# append the following
+# append the following (idempotent)
 # # ---
 # # custom config
 # # ---
